@@ -1,0 +1,5 @@
+../Core/Src/ledbar.c:4:6:dataOut	24	static
+../Core/Src/ledbar.c:77:6:LED_BAR_UP	8	static
+../Core/Src/ledbar.c:90:6:LED_BAR_DOWN	8	static
+../Core/Src/ledbar.c:104:6:LED_BAR_UP_ing	16	static
+../Core/Src/ledbar.c:138:6:LED_BAR_DOWN_ing	16	static

@@ -1,0 +1,13 @@
+
+#include "stm32f4xx_hal.h"
+
+#ifndef INC_LEDBAR_H_
+#define INC_LEDBAR_H_
+
+#define SER_PIN1 GPIO_PIN_8
+#define RCLK_PIN2 GPIO_PIN_5
+#define SRCLK_PIN3 GPIO_PIN_6
+
+#define GPIO_PORT GPIOC
+
+#endif /* INC_LEDBAR_H_ */

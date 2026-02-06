@@ -1,0 +1,17 @@
+12:04:22 **** Incremental Build of configuration Debug for project TEAM6_Elevator_LED ****
+make -j12 all 
+arm-none-eabi-gcc "../Core/Src/ledbar.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F411xE -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/ledbar.d" -MT"Core/Src/ledbar.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/ledbar.o"
+arm-none-eabi-gcc -o "TEAM6_Elevator_LED.elf" @"objects.list"   -mcpu=cortex-m4 -T"/home/appletea/workspace_onedevice_2/Project 2/TEAM6_Elevator_LED/STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TEAM6_Elevator_LED.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: TEAM6_Elevator_LED.elf
+ 
+arm-none-eabi-size  TEAM6_Elevator_LED.elf 
+arm-none-eabi-objdump -h -S TEAM6_Elevator_LED.elf  > "TEAM6_Elevator_LED.list"
+   text	   data	    bss	    dec	    hex	filename
+  11724	     20	   1724	  13468	   349c	TEAM6_Elevator_LED.elf
+Finished building: default.size.stdout
+ 
+Finished building: TEAM6_Elevator_LED.list
+ 
+
+12:04:23 Build Finished. 0 errors, 0 warnings. (took 410ms)
+
