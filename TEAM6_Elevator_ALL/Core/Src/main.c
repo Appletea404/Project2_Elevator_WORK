@@ -25,6 +25,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "button.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,11 +48,41 @@
 
 /* USER CODE BEGIN PV */
 
+
+
+extern uint8_t current_floor = 1;
+
+
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == GPIO_PIN_1)
+  {
+    current_floor = 1;
+  }
+  else if(GPIO_Pin == GPIO_PIN_2)
+    {
+      current_floor = 2;
+    }
+  else if(GPIO_Pin == GPIO_PIN_3)
+    {
+      current_floor = 3;
+    }
+}
+
+
+
+
 
 /* USER CODE END PFP */
 
@@ -98,6 +130,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  ButtonMove(current_floor);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

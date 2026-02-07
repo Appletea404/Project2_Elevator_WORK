@@ -424,3 +424,6 @@ java.lang.NullPointerException: Cannot invoke "org.eclipse.cdt.internal.core.set
 
 !ENTRY org.eclipse.cdt.core 1 0 2026-02-07 10:33:15.227
 !MESSAGE Indexed 'project2_btn_int_stepper' (22 sources, 119 headers) in 1.65 sec: 10,320 declarations; 36,990 references; 1 unresolved inclusions; 92 syntax errors; 240 unresolved names (0.5%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-02-07 11:32:26.877
+!MESSAGE Indexed 'TEAM6_Elevator_ALL' (25 sources, 123 headers) in 1.59 sec: 12,766 declarations; 62,495 references; 1 unresolved inclusions; 92 syntax errors; 240 unresolved names (0.32%)

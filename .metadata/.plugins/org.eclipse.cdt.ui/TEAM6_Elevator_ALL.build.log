@@ -1,0 +1,10 @@
+13:37:42 **** Incremental Build of configuration Debug for project TEAM6_Elevator_ALL ****
+make -j12 all 
+arm-none-eabi-size  TEAM6_Elevator_ALL.elf 
+   text	   data	    bss	    dec	    hex	filename
+  12652	     48	   1736	  14436	   3864	TEAM6_Elevator_ALL.elf
+Finished building: default.size.stdout
+ 
+
+13:37:42 Build Finished. 0 errors, 0 warnings. (took 75ms)
+

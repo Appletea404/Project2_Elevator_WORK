@@ -1,0 +1,11 @@
+../Core/Src/fnd.c:4:6:dataOut_FND	24	static
+../Core/Src/fnd.c:91:6:ELE_DOWN	4	static
+../Core/Src/fnd.c:96:6:SEVEN_FND_Init	8	static
+../Core/Src/fnd.c:101:6:Dig_AllOff	16	static
+../Core/Src/fnd.c:111:6:Dig_SINGLE_ON	16	static
+../Core/Src/fnd.c:122:6:FND_ScanOnce	8	static
+../Core/Src/fnd.c:135:20:tiny_delay	16	static,ignoring_inline_asm
+../Core/Src/fnd.c:140:23:floor_to_seg	16	static
+../Core/Src/fnd.c:150:6:FND_SetUp	16	static
+../Core/Src/fnd.c:158:6:FND_SetDown	16	static
+../Core/Src/fnd.c:165:6:SEVEN_FND	8	static

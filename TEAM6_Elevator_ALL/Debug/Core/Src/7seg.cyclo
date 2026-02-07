@@ -1,0 +1,3 @@
+../Core/Src/7seg.c:5:6:dataOut_SEG	3
+../Core/Src/7seg.c:68:6:SEVEN_SEG_Init	1
+../Core/Src/7seg.c:73:6:SEVEN_SEG	4

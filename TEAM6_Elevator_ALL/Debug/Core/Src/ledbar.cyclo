@@ -1,0 +1,5 @@
+../Core/Src/ledbar.c:4:6:dataOut_LED	3
+../Core/Src/ledbar.c:77:6:LED_BAR_UP	2
+../Core/Src/ledbar.c:90:6:LED_BAR_DOWN	2
+../Core/Src/ledbar.c:104:6:LED_BAR_UP_ing	5
+../Core/Src/ledbar.c:138:6:LED_BAR_DOWN_ing	5

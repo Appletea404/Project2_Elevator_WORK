@@ -1,0 +1,11 @@
+../Core/Src/fnd.c:4:6:dataOut_FND	3
+../Core/Src/fnd.c:91:6:ELE_DOWN	1
+../Core/Src/fnd.c:96:6:SEVEN_FND_Init	1
+../Core/Src/fnd.c:101:6:Dig_AllOff	2
+../Core/Src/fnd.c:111:6:Dig_SINGLE_ON	1
+../Core/Src/fnd.c:122:6:FND_ScanOnce	2
+../Core/Src/fnd.c:135:20:tiny_delay	2
+../Core/Src/fnd.c:140:23:floor_to_seg	5
+../Core/Src/fnd.c:150:6:FND_SetUp	1
+../Core/Src/fnd.c:158:6:FND_SetDown	1
+../Core/Src/fnd.c:165:6:SEVEN_FND	4
