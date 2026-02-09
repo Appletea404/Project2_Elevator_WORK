@@ -5,15 +5,16 @@
 BUTTON_CONTROL button[10]=
     {
         {GPIOC, GPIO_PIN_9, 0},			//버튼1
-        {GPIOB, GPIO_PIN_8, 0},			//버튼2
-        {GPIOB, GPIO_PIN_9, 0},			//버튼3
-        {GPIOA, GPIO_PIN_5, 0},			//버튼4
-        {GPIOB, GPIO_PIN_6, 0},			//버튼5
-        {GPIOC, GPIO_PIN_7, 0},			//버튼6
-        {GPIOA, GPIO_PIN_9, 0},			//버튼7
-        {GPIOA, GPIO_PIN_8, 0},			//버튼8
-        {GPIOB, GPIO_PIN_10, 0},		//버튼9
-        {GPIOB, GPIO_PIN_4, 0},			//버튼10
+        {GPIOA, GPIO_PIN_5, 0},			//버튼2
+        {GPIOB, GPIO_PIN_6, 0},			//버튼3
+        {GPIOC, GPIO_PIN_7, 0},			//버튼4
+        {GPIOA, GPIO_PIN_9, 0},			//버튼5
+        {GPIOA, GPIO_PIN_8, 0},			//버튼6
+        {GPIOB, GPIO_PIN_10, 0},		//버튼7
+        {GPIOB, GPIO_PIN_4, 0},			//버튼8
+        {GPIOB, GPIO_PIN_5, 0},			//버튼9
+        {GPIOA, GPIO_PIN_10, 0},		//버튼10
+
 
     };
 

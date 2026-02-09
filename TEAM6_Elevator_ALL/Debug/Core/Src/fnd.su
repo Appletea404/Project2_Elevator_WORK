@@ -3,7 +3,7 @@
 ../Core/Src/fnd.c:94:6:Dig_AllOff	16	static
 ../Core/Src/fnd.c:104:6:Dig_SINGLE_ON	16	static
 ../Core/Src/fnd.c:115:6:FND_ScanOnce	8	static
-../Core/Src/fnd.c:128:20:tiny_delay	16	static,ignoring_inline_asm
+../Core/Src/fnd.c:128:13:tiny_delay	16	static,ignoring_inline_asm
 ../Core/Src/fnd.c:133:23:floor_to_seg	16	static
 ../Core/Src/fnd.c:143:6:FND_Init	4	static
 ../Core/Src/fnd.c:151:6:FND_DIR_Up	4	static

@@ -125,7 +125,7 @@ void FND_ScanOnce(void)
 }
 
 /* tiny delay to reduce ghosting */
-static inline void tiny_delay(void)
+static void tiny_delay(void)
 {
     for (volatile int i = 0; i < 80; i++) { __NOP(); }
 }

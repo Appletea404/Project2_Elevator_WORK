@@ -32,8 +32,8 @@ typedef struct FND_DIG
 #define RCLK_PORT_FND GPIOC
 #define RCLK_PIN_FND GPIO_PIN_4
 
-#define SRCLK_PORT_FND GPIOA
-#define SRCLK_PIN_FND GPIO_PIN_10
+#define SRCLK_PORT_FND GPIOB
+#define SRCLK_PIN_FND GPIO_PIN_3
 
 
 extern void dataOut_FND(uint8_t data);

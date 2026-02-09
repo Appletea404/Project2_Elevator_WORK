@@ -1241,3 +1241,6 @@ Command-line arguments:  -os linux -ws gtk -arch x86_64
 
 !ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-02-09 10:02:22.879
 !MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-02-09 20:12:27.314
+!MESSAGE Indexed '0B_1_Project_Subo_Motor' (25 sources, 122 headers) in 1.69 sec: 11,996 declarations; 56,117 references; 1 unresolved inclusions; 92 syntax errors; 240 unresolved names (0.35%)

@@ -55,13 +55,14 @@ bool CHECK_FLOOR_OVERFLOW(uint8_t floor)	//층 유효범위 체크
 	return (floor >= FLOOR_MIN && floor <= FLOOR_MAX);
 }
 
-
-uint8_t REQ_BIT(uint8_t currentfloor)		//floor bit 001 010 100 으로 시프트
+// === 요청을 받으면 층수를 기록 ===
+uint8_t REQ_BIT(uint8_t floor)		//floor bit 001 010 100 으로 시프트
 {
-	if(!CHECK_FLOOR_OVERFLOW(currentfloor))
+	if(!CHECK_FLOOR_OVERFLOW(floor))
 		return 0;
 	else
-		return 1 << (currentfloor - 1);
+		//1층이면 0번비트 2층이면 1번비트 3층이면 2번비트
+		return 1 << (floor - 1);
 }
 
 //===요청이 있는지 확인===
@@ -132,6 +133,7 @@ void ELEVATOR_DIR()
 
 // === 외부 버튼 위,아래 버튼 ===
 
+// 외부에서 위로 가는 값을 저장
 void OUT_REQ_SET_UP(uint8_t floor)
 {
     uint8_t st = REQ_BIT(floor);
@@ -139,6 +141,7 @@ void OUT_REQ_SET_UP(uint8_t floor)
     out_req_up |= st;
 }
 
+// 외부에서 아래로 가는 값을 저장
 void OUT_REQ_SET_DOWN(uint8_t floor)
 {
     uint8_t st = REQ_BIT(floor);
@@ -146,6 +149,8 @@ void OUT_REQ_SET_DOWN(uint8_t floor)
     out_req_down |= st;
 }
 
+
+// 외부에서 위로 가는 값을 제거 (상태 초기화)
 void OUT_REQ_CLEAR_UP(uint8_t floor)
 {
     uint8_t st = REQ_BIT(floor);
@@ -153,6 +158,7 @@ void OUT_REQ_CLEAR_UP(uint8_t floor)
     out_req_up &= (uint8_t)~st;
 }
 
+// 외부에서 아래로 가는 값을 제거 (상태 초기화)
 void OUT_REQ_CLEAR_DOWN(uint8_t floor)
 {
     uint8_t st = REQ_BIT(floor);
@@ -178,21 +184,6 @@ void MOTOR_STOP(void)			//모터 정지
     upordown = 0;
 }
 
-void EMG_STOP_NEXT(void)			//비상정지 이후 작동 함수
-{
-	if(upordown == 1)		//UP
-	{
-		emg_stop_floor = (current_floor < FLOOR_MAX) ? (current_floor + 1) : current_floor;
-	}
-	else if(upordown == 2)		//DOWN
-		{
-			emg_stop_floor = (current_floor > FLOOR_MIN) ? (current_floor - 1) : current_floor;
-		}
-	else
-	{
-		emg_stop_floor = current_floor;
-	}
-}
 
 // === 층 변화 이벤트 처리 ===
 
@@ -214,7 +205,7 @@ void CHANGED_FLOOR(uint8_t floor)
 
 	if(destination_floor != 0 && floor == destination_floor)
 	{
-	    // --- 해당 층의 요청 비트 정리(내부/외부 모두) ---
+	    // === 해당 층의 요청 비트 정리(내부/외부 모두) ===
 	    uint8_t st = REQ_BIT(floor);
 	    if(st)
 	    {
@@ -223,7 +214,7 @@ void CHANGED_FLOOR(uint8_t floor)
 	        out_req_down    &= (uint8_t)~st;
 	    }
 
-	    // --- 도착 처리 ---
+	    // === 도착후 초기화 ===
 	    destination_floor = 0;
 	    LED_BAR_OFF();
 	    MOTOR_STOP();
@@ -236,18 +227,12 @@ void CHANGED_FLOOR(uint8_t floor)
 
 
 
-	//비상정지 층이면 멈춤
-	if(emg_stop_floor && floor == emg_stop_floor)
-	{
-		emg_stop_floor = 0;
-		MOTOR_STOP();
-		button_flag = DOOR;
-		prevMoveTime = HAL_GetTick();
-		return;
-	}
 
-	//요청된 층이면 멈춤
-	bool stop_by_request = false;		//새롭게 멈춤 확인용 변수 생성
+	/* === 요청된 층이면 멈춤 ===
+	 * 층이 바뀌는 순간 CHANGED_FLOOR 중 지금 멈춰야하는 지 판단하는 것
+	 * 조건이 일치하면 멈추고 DOOR Phase로 전환하면서 요청을 초기화
+	 */
+	bool stop_by_request = false;		//이번 층에서 멈출지의 Flag
 
 
 
@@ -274,13 +259,13 @@ void CHANGED_FLOOR(uint8_t floor)
 
 	if(stop_by_request)		//요청제거
 	{
-		if(REQ_CHECK(floor, requested_floor))		//내부요청제거
+		if(REQ_CHECK(floor, requested_floor))		//요청받은 층 내용들 초기화
 		{
 			uint8_t st = REQ_BIT(floor);
 			requested_floor &= (uint8_t)~st;
 		}
 
-		if(REQ_CHECK(floor, out_req_up))
+		if(REQ_CHECK(floor, out_req_up))			//외부 버튼 입력 들어온 방향을 초기화
 		{
 			OUT_REQ_CLEAR_UP(floor);
 		}
@@ -320,6 +305,7 @@ void ELEVATOR_MOVE(void)
 	}
 
 	//비상버튼
+	// 모두 초기화하고 정지
 
 	if(buttonGetPressed(BTN_IN_EMG))
 	{
@@ -506,13 +492,13 @@ void ELEVATOR_MOVE(void)
 				break;
 			}
 
-			if(buttonGetPressed(BTN_OPEN_DOOR))
+			if(buttonGetPressed(BTN_OPEN_DOOR))			//문 열림 상태 저장
 			{
 				openorclose = true;
 				prevMoveTime = HAL_GetTick();
 			}
 
-			if(HAL_GetTick() - prevMoveTime > DOOR_HOLD_MS)
+			if(HAL_GetTick() - prevMoveTime > DOOR_HOLD_MS)		//문이 열리고 닫히는 동안 대기하는 시간
 			{
 				openorclose = false;
 				button_flag = IDLE;
