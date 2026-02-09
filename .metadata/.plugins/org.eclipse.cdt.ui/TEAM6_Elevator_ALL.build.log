@@ -1,10 +1,40 @@
-01:19:35 **** Incremental Build of configuration Debug for project TEAM6_Elevator_ALL ****
+10:48:22 **** Incremental Build of configuration Debug for project TEAM6_Elevator_ALL ****
 make -j12 all 
+arm-none-eabi-gcc "../Core/Src/elevator.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F411xE -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/elevator.d" -MT"Core/Src/elevator.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/elevator.o"
+../Core/Src/elevator.c: In function 'CHANGED_FLOOR':
+../Core/Src/elevator.c:228:13: warning: implicit declaration of function 'LED_BAR_OFF' [-Wimplicit-function-declaration]
+  228 |             LED_BAR_OFF();
+      |             ^~~~~~~~~~~
+../Core/Src/elevator.c: In function 'ELEVATOR_MOVE':
+../Core/Src/elevator.c:473:29: warning: implicit declaration of function 'LED_BAR_Reset' [-Wimplicit-function-declaration]
+  473 |                             LED_BAR_Reset();      // 방향 전환 시 무조건 리셋
+      |                             ^~~~~~~~~~~~~
+../Core/Src/elevator.c:483:33: warning: implicit declaration of function 'FND_DIR_Up' [-Wimplicit-function-declaration]
+  483 |                                 FND_DIR_Up();
+      |                                 ^~~~~~~~~~
+../Core/Src/elevator.c:490:33: warning: implicit declaration of function 'FND_DIR_Down' [-Wimplicit-function-declaration]
+  490 |                                 FND_DIR_Down();
+      |                                 ^~~~~~~~~~~~
+In file included from ../Core/Inc/elevator.h:8,
+                 from ../Core/Src/elevator.c:2:
+../Core/Inc/fnd.h: At top level:
+../Core/Inc/fnd.h:43:13: warning: 'tiny_delay' declared 'static' but never defined [-Wunused-function]
+   43 | static void tiny_delay(void);
+      |             ^~~~~~~~~~
+../Core/Src/elevator.c:50:17: warning: 'step_count' defined but not used [-Wunused-variable]
+   50 | static uint16_t step_count = 0;
+      |                 ^~~~~~~~~~
+arm-none-eabi-gcc -o "TEAM6_Elevator_ALL.elf" @"objects.list"   -mcpu=cortex-m4 -T"/home/appletea/workspace_onedevice_2/Project 2/TEAM6_Elevator_ALL/STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TEAM6_Elevator_ALL.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: TEAM6_Elevator_ALL.elf
+ 
 arm-none-eabi-size  TEAM6_Elevator_ALL.elf 
+arm-none-eabi-objdump -h -S TEAM6_Elevator_ALL.elf  > "TEAM6_Elevator_ALL.list"
    text	   data	    bss	    dec	    hex	filename
-  11828	    136	   1768	  13732	   35a4	TEAM6_Elevator_ALL.elf
+  11852	    136	   1768	  13756	   35bc	TEAM6_Elevator_ALL.elf
 Finished building: default.size.stdout
  
+Finished building: TEAM6_Elevator_ALL.list
+ 
 
-01:19:35 Build Finished. 0 errors, 0 warnings. (took 79ms)
+10:48:22 Build Finished. 0 errors, 6 warnings. (took 224ms)
 

@@ -2,20 +2,10 @@
 #include "elevator.h"
 
 
+// 최대 최소 층수
 
-uint8_t current_floor = 1;				//현재층
-static uint8_t destination_floor = 0;	//목적지 층
-static uint8_t requested_floor = 0;		//입력받은 요청층
-static uint8_t out_req_up = 0;			//외부에서 위쪽버튼 눌렀을떄 상태 설정
-static uint8_t out_req_down = 0;		//외부에서 아래쪽버튼 눌렀을때 상태 설정
-static uint8_t button_flag = 0; 		// 층 버튼이 눌린건지 확인
-static bool dest_in = false;		// 내부에서 설정한 목적지 판별
-static uint8_t emg_stop_floor = 0;		// 비상정지시 찾아갈 가장 가까운 층
-//static uint8_t outside = 0; // 외부에서 눌린건지
-static uint8_t upordown = 0; 			// 움직이는 엘리베이터의 위 아래 방향 판단
-static bool openorclose = false;			//문이 열렸는지 닫혔는지 판단
-static uint16_t step_count = 0;
-static uint32_t prevMoveTime = 0;
+#define FLOOR_MIN 1
+#define FLOOR_MAX 3
 
 
 
@@ -33,10 +23,7 @@ typedef enum	//버튼 모음
 	BTN_OUT_3F_DOWN,
 }BTN;
 
-// 최대 최소 층수
 
-#define FLOOR_MIN 1
-#define FLOOR_MAX 3
 
 typedef enum	//승강기의 상태를 0,1,2,3으로 받기위해
 {
@@ -45,6 +32,23 @@ typedef enum	//승강기의 상태를 0,1,2,3으로 받기위해
 	DOOR,		//문이 열리고 닫히는 Phase
 	PAUSE,		//모든 출력과 모터 OFF(비상정지)
 }STATE;
+
+
+
+
+uint8_t current_floor = 1;				//현재층
+static uint8_t destination_floor = 0;	//목적지 층
+static uint8_t requested_floor = 0;		//입력받은 요청층
+static uint8_t out_req_up = 0;			//외부에서 위쪽버튼 눌렀을떄 상태 설정
+static uint8_t out_req_down = 0;		//외부에서 아래쪽버튼 눌렀을때 상태 설정
+static STATE button_flag = 0; 		// 층 버튼이 눌린건지 확인
+static bool dest_in = false;		// 내부에서 설정한 목적지 판별
+static uint8_t emg_stop_floor = 0;		// 비상정지시 찾아갈 가장 가까운 층
+//static uint8_t outside = 0; // 외부에서 눌린건지
+static uint8_t upordown = 0; 			// 움직이는 엘리베이터의 위 아래 방향 판단
+static bool openorclose = false;			//문이 열렸는지 닫혔는지 판단
+static uint16_t step_count = 0;
+static uint32_t prevMoveTime = 0;
 
 bool CHECK_FLOOR_OVERFLOW(uint8_t floor)	//층 유효범위 체크
 {
@@ -207,7 +211,7 @@ void CHANGED_FLOOR(uint8_t floor)
 
 	if(button_flag != MOVE) return;	//MOVE 상태가 아니면 종료
 
-	// ✅ 목적지 도착이면(요청 비트 없어도) 무조건 정지
+
 	if(destination_floor != 0 && floor == destination_floor)
 	{
 	    // --- 해당 층의 요청 비트 정리(내부/외부 모두) ---
@@ -396,7 +400,7 @@ void ELEVATOR_MOVE(void)
 			        dest_in = false;
 			        destination_floor = 0;
 
-			        // ✅ 요청이 없어도 "다음 층"까지는 가서 정지 후 IDLE
+			        // 요청이 없어도 "다음 층"까지는 가서 정지 후 IDLE
 			        if(upordown == 1) // UP
 			        {
 			            if(current_floor < FLOOR_MAX) destination_floor = current_floor + 1;
@@ -476,12 +480,14 @@ void ELEVATOR_MOVE(void)
 			{
 				rotateSteps(1000, DIR_CW);
 				LED_BAR_UP_ing();
+				FND_DIR_Up();
 			}
 
 			else if(upordown == 2)
 			{
 				rotateSteps(1000, DIR_CCW);
 				LED_BAR_DOWN_ing();
+				FND_DIR_Down();
 			}
 			else
 			{

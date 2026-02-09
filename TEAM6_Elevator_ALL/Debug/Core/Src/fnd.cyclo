@@ -6,7 +6,8 @@
 ../Core/Src/fnd.c:128:20:tiny_delay	2
 ../Core/Src/fnd.c:133:23:floor_to_seg	5
 ../Core/Src/fnd.c:143:6:FND_Init	1
-../Core/Src/fnd.c:151:6:FND_SetUp	1
-../Core/Src/fnd.c:159:6:FND_SetDown	1
-../Core/Src/fnd.c:172:6:FND_UP	2
-../Core/Src/fnd.c:180:6:FND_DOWN	2
+../Core/Src/fnd.c:151:6:FND_DIR_Up	1
+../Core/Src/fnd.c:158:6:FND_DIR_Down	1
+../Core/Src/fnd.c:165:6:FND_Floor_Num	1
+../Core/Src/fnd.c:175:6:FND_UP	2
+../Core/Src/fnd.c:184:6:FND_DOWN	2

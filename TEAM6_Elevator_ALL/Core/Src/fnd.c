@@ -148,20 +148,23 @@ void FND_Init()
     display[3] = SEG_F;
 }
 
-void FND_SetUp(uint8_t floor)
+void FND_DIR_Up()
 {
     display[0] = SEG_U;                 // DIG1
     display[1] = SEG_P;                 // DIG2
-    display[2] = floor_to_seg(floor);   // DIG3
     display[3] = SEG_F;                 // DIG4
 }
 
-void FND_SetDown(uint8_t floor)
+void FND_DIR_Down()
 {
     display[0] = SEG_d;
     display[1] = SEG_o;
-    display[2] = floor_to_seg(floor);
     display[3] = SEG_F;
+}
+
+void FND_Floor_Num(uint8_t floor)
+{
+    display[2] = floor_to_seg(floor);
 }
 
 static uint32_t prevTick = 0;
@@ -174,7 +177,8 @@ void FND_UP(uint8_t floor)
 	uint32_t currentTick = HAL_GetTick();		//Non-blocking
 	if ((currentTick - prevTick) < waitTick) return; // 200ms 아직 안 됨
 	prevTick = currentTick;
-	FND_SetUp(floor);
+	FND_DIR_Up(floor);
+	FND_Floor_Num(floor);
 }
 
 void FND_DOWN(uint8_t floor)
@@ -182,7 +186,8 @@ void FND_DOWN(uint8_t floor)
 	uint32_t currentTick = HAL_GetTick();		//Non-blocking
 	if ((currentTick - prevTick) < waitTick) return; // 200ms 아직 안 됨
 	prevTick = currentTick;
-	FND_SetDown(floor);
+	FND_DIR_Down(floor);
+	FND_Floor_Num(floor);
 }
 
 
