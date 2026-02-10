@@ -10,6 +10,9 @@
 
 #include "stm32f4xx_hal.h"
 
+
+
+
 #define I2C_LCD_ADDRESS	(0x27<<1)
 
 
@@ -21,9 +24,14 @@
 
 void lcd_command(uint8_t command);
 void lcd_data(uint8_t data);
-void i2c_lcd_init(void);
+//void i2c_lcd_init(void);
 void lcd_string(char *str);
 void move_cursor(uint8_t row, uint8_t col);
+
+void i2c_lcd_init_check();
+void LCD_SetText2Lines(const char *line0, const char *line1);
+void LCD_CommitIfChanged(void);
+void LCD_ClearBuffers(void);
 
 
 #endif /* INC_I2C_LCD_H_ */

@@ -1,5 +1,12 @@
-../Core/Src/i2c_lcd.c:12:6:lcd_command	2
-../Core/Src/i2c_lcd.c:28:6:lcd_data	2
-../Core/Src/i2c_lcd.c:44:6:i2c_lcd_init	1
-../Core/Src/i2c_lcd.c:61:6:lcd_string	2
-../Core/Src/i2c_lcd.c:66:6:move_cursor	1
+../Core/Src/i2c_lcd.c:16:26:lcd_i2c_tx	4
+../Core/Src/i2c_lcd.c:37:6:lcd_command	1
+../Core/Src/i2c_lcd.c:58:6:lcd_data	1
+../Core/Src/i2c_lcd.c:81:6:i2c_lcd_init_check	2
+../Core/Src/i2c_lcd.c:104:6:i2c_lcd_init	1
+../Core/Src/i2c_lcd.c:109:6:lcd_string	2
+../Core/Src/i2c_lcd.c:114:6:move_cursor	1
+../Core/Src/i2c_lcd.c:129:13:fill_spaces_16	2
+../Core/Src/i2c_lcd.c:135:13:make_line16	4
+../Core/Src/i2c_lcd.c:144:6:LCD_ClearBuffers	1
+../Core/Src/i2c_lcd.c:152:6:LCD_SetText2Lines	1
+../Core/Src/i2c_lcd.c:159:6:LCD_CommitIfChanged	5

@@ -1,0 +1,600 @@
+
+#include "elevator.h"
+#include <stdio.h>
+
+
+
+// 최대 최소 층수
+
+#define FLOOR_MIN 1
+#define FLOOR_MAX 3
+
+#define DOOR_HOLD_MS 7000 // 문열리고 대기하는 시간(대략적으로)
+
+
+
+
+typedef enum	//버튼 모음
+{
+	BTN_IN_1F,
+	BTN_IN_2F,
+	BTN_IN_3F,
+	BTN_IN_EMG,
+	BTN_OPEN_DOOR,
+	BTN_CLOSE_DOOR,
+	BTN_OUT_1F_UP,
+	BTN_OUT_2F_UP,
+	BTN_OUT_2F_DOWN,
+	BTN_OUT_3F_DOWN,
+}BTN;
+
+
+
+typedef enum	//승강기의 상태를 0,1,2,3으로 받기위해
+{
+	IDLE,		//요청있는지 대기상태, 있으면 목적지 고르고 방향 결정하고 MOVE
+	MOVE,		//승강기 동작
+	DOOR,		//문이 열리고 닫히는 Phase
+	PAUSE,		//모든 출력과 모터 OFF(비상정지)
+}STATE;
+
+
+
+
+uint8_t current_floor = 1;				//현재층
+static uint8_t destination_floor = 0;	//목적지 층
+static uint8_t requested_floor = 0;		//입력받은 요청층
+static uint8_t out_req_up = 0;			//외부에서 위쪽버튼 눌렀을떄 상태 설정
+static uint8_t out_req_down = 0;		//외부에서 아래쪽버튼 눌렀을때 상태 설정
+static STATE button_flag = 0; 		// 층 버튼이 눌린건지 확인
+static bool dest_in = false;		// 내부에서 설정한 목적지 판별
+//static uint8_t emg_stop_floor = 0;		// 비상정지시 찾아갈 가장 가까운 층
+//static uint8_t outside = 0; // 외부에서 눌린건지
+static uint8_t upordown = 0; 			// 움직이는 엘리베이터의 위 아래 방향 판단
+static bool openorclose = false;			//문이 열렸는지 닫혔는지 판단
+static uint32_t doortick = 0;			//문 시간
+//static uint32_t prevMoveTime = 0;
+
+
+static void DOOR_SET(bool open)
+{
+    static int8_t last = -1;          // -1: 초기
+    if(last == (int8_t)open) return;  // 같은 명령이면 무시
+    last = open;
+
+    openorclose = open;
+    if(open) Elevator_Open();
+    else     Elevator_Close();
+}
+
+bool CHECK_FLOOR_OVERFLOW(uint8_t floor)	//층 유효범위 체크
+{
+	return (floor >= FLOOR_MIN && floor <= FLOOR_MAX);
+}
+
+// === 요청을 받으면 층수를 기록 ===
+uint8_t REQ_BIT(uint8_t floor)		//floor bit 001 010 100 으로 시프트
+{
+	if(!CHECK_FLOOR_OVERFLOW(floor))
+		return 0;
+	else
+		//1층이면 0번비트 2층이면 1번비트 3층이면 2번비트
+		return 1 << (floor - 1);
+}
+
+//===요청이 있는지 확인===
+bool REQ_CHECK( uint8_t cur_floor, uint8_t req_floor)
+{
+	uint8_t st = REQ_BIT(cur_floor);
+	return (st != 0) && ((st & req_floor) != 0);
+	/*
+	 *
+	 * st != 0 은 req_bit를 거쳐 나온게 유효한지 검사
+	 * (st & requestedfloor) != 0 은 idx에서 st의 비교
+	 * idx비트에 st가 가리키는 비트가있다면 1이나온다
+	 * 왼쪽과 비교해서 1 && 1이 나와야 return으로 1
+	 * 요청있다고 판단
+	*/
+}
+
+//===요청 토글(버튼으로 추가/취소)===
+
+void REQ_TOGGLE(uint8_t floor)
+{
+	uint8_t st = REQ_BIT(floor);
+	if(st == 0) return;
+	requested_floor ^= st;
+}
+
+// === 요청중 가까운층 선택 ===
+
+uint8_t REQ_NEAREST(uint8_t cur_idx, uint8_t req_idx)
+{
+	if(req_idx == 0) return 0;	//아무것도 없으면 그냥 넘어감
+
+	uint8_t best_floor = 0;			// 현재까지 선택된 층에서 가장 가까운 층
+	uint8_t bestDist = 0xff;	// 현재까지 최소거리
+
+	for(uint8_t i = FLOOR_MIN; i <= FLOOR_MAX; i++)
+	{
+		if(REQ_CHECK(i, req_idx))		//요청이 있다고 판단이 되면
+		{
+			uint8_t dist = (cur_idx > i) ? (cur_idx - i) : (i - cur_idx);	//층수 차이만큼 dist 저장
+			if(dist < bestDist)			//dist가 bestDist보다 짧다고 판단되면
+			{
+				bestDist = dist;			//갱신
+				best_floor = i;
+			}
+		}
+	}
+	return best_floor;
+}
+
+//=== 엘리베이터 방향 설정===
+
+void ELEVATOR_DIR()
+{
+	if(destination_floor == 0 || destination_floor == current_floor) //초기화상태거나 현재층이 목적층과 같을때
+	{
+		upordown = 0;		//정지
+	}
+	else if(destination_floor > current_floor)
+	{
+		upordown = 1;		//UP
+	}
+	else
+	{
+		upordown = 2;		//DOWN
+	}
+}
+
+// === 외부 버튼 위,아래 버튼 ===
+
+// 외부에서 위로 가는 값을 저장
+void OUT_REQ_SET_UP(uint8_t floor)
+{
+    uint8_t st = REQ_BIT(floor);
+    if(st == 0) return;
+    out_req_up |= st;
+}
+
+// 외부에서 아래로 가는 값을 저장
+void OUT_REQ_SET_DOWN(uint8_t floor)
+{
+    uint8_t st = REQ_BIT(floor);
+    if(st == 0) return;
+    out_req_down |= st;
+}
+
+
+// 외부에서 위로 가는 값을 제거 (상태 초기화)
+void OUT_REQ_CLEAR_UP(uint8_t floor)
+{
+    uint8_t st = REQ_BIT(floor);
+    if(st == 0) return;
+    out_req_up &= (uint8_t)~st;
+}
+
+// 외부에서 아래로 가는 값을 제거 (상태 초기화)
+void OUT_REQ_CLEAR_DOWN(uint8_t floor)
+{
+    uint8_t st = REQ_BIT(floor);
+    if(st == 0) return;
+    out_req_down &= (uint8_t)~st;
+}
+
+// === 비상정지 함수들 ===
+
+void ALL_OUTPUTS_OFF(void)		//모든 LED 끄기
+{
+    dataOut_LED(0x00);
+    dataOut_SEG(0x00);
+    Dig_AllOff();
+    dataOut_FND(0x00);
+}
+
+
+void MOTOR_STOP(void)			//모터 정지
+{
+    rotateInit();
+    rotateSteps(0, 0);
+    upordown = 0;
+}
+
+
+// === 층 변화 이벤트 처리 ===
+
+void CHANGED_FLOOR(uint8_t floor)
+{
+	SEVEN_SEG(floor);
+
+	if(upordown == 1)
+	{
+		FND_UP(floor);
+	}
+	else if(upordown == 2)
+	{
+		FND_DOWN(floor);
+	}
+
+	if(button_flag != MOVE) return;	//MOVE 상태가 아니면 종료
+
+
+	if(destination_floor != 0 && floor == destination_floor)
+	{
+	    // === 해당 층의 요청 비트 정리(내부/외부 모두) ===
+	    uint8_t st = REQ_BIT(floor);
+	    if(st)
+	    {
+	        requested_floor &= (uint8_t)~st;
+	        out_req_up      &= (uint8_t)~st;
+	        out_req_down    &= (uint8_t)~st;
+	    }
+
+	    // === 도착후 초기화 ===
+	    destination_floor = 0;
+	    LED_BAR_OFF();
+	    MOTOR_STOP();
+	    dest_in = false;
+	    button_flag = DOOR;
+	    doortick = HAL_GetTick();
+	    DOOR_SET(true);
+	    return;
+	}
+
+
+
+
+	/* === 요청된 층이면 멈춤 ===
+	 * 층이 바뀌는 순간 CHANGED_FLOOR 중 지금 멈춰야하는 지 판단하는 것
+	 * 조건이 일치하면 멈추고 DOOR Phase로 전환하면서 요청을 초기화
+	 */
+	bool stop_by_request = false;		//이번 층에서 멈출지의 Flag
+
+
+
+
+	if(REQ_CHECK(floor, requested_floor))		//내부요청은 방향 상관없이 정지
+	{
+		stop_by_request = true;
+	}
+
+	if (upordown == 1)							//외부요청은 방향이 일치할때만 정지
+	{
+		if(REQ_CHECK(floor, out_req_up))
+			{
+				stop_by_request = true;
+			}
+	}
+	else if(upordown == 2)
+	{
+		if(REQ_CHECK(floor, out_req_down))
+			{
+				stop_by_request = true;
+			}
+	}
+
+	if(stop_by_request)		//요청제거
+	{
+		if(REQ_CHECK(floor, requested_floor))		//요청받은 층 내용들 초기화
+		{
+			uint8_t st = REQ_BIT(floor);
+			requested_floor &= (uint8_t)~st;
+		}
+
+		if(REQ_CHECK(floor, out_req_up))			//외부 버튼 입력 들어온 방향을 초기화
+		{
+			OUT_REQ_CLEAR_UP(floor);
+		}
+		if(REQ_CHECK(floor, out_req_down))
+		{
+			OUT_REQ_CLEAR_DOWN(floor);
+		}
+
+
+		// == 초기화 ==
+		destination_floor = 0;
+		LED_BAR_OFF();
+		MOTOR_STOP();
+		dest_in = false;
+		button_flag = DOOR;
+		doortick = HAL_GetTick();
+		DOOR_SET(true);
+		return;
+	}
+
+
+
+
+}
+
+
+
+void ELEVATOR_MOVE(void)
+{
+	static uint8_t last_floor = 1;		//마지막으로 들렀던 층
+
+	if(current_floor != last_floor)		//층이 변화되면
+	{
+		last_floor = current_floor;
+		CHANGED_FLOOR(current_floor);
+	}
+
+	//비상버튼
+	// 모두 초기화하고 정지
+
+	if(buttonGetPressed(BTN_IN_EMG))
+	{
+		destination_floor = 0;
+		dest_in = false;
+		MOTOR_STOP();
+		ALL_OUTPUTS_OFF();
+//		emg_stop_floor = 0;
+		button_flag = PAUSE;
+//		i2c_lcd_init();
+//		move_cursor(0, 0);
+//		lcd_string("EMERGENCY STOP");
+//		move_cursor(1, 0);
+//		lcd_string("STAND BY");
+	}
+
+	// PAUSE 상태일때 내부버튼 1,2,3 누르면 재개
+	if(button_flag == PAUSE)
+	{
+		if(buttonGetPressed(BTN_IN_1F) || buttonGetPressed(BTN_IN_2F) || buttonGetPressed(BTN_IN_3F))
+		{
+			//모든 요청 초기화와 표시 복구
+
+			requested_floor = 0;
+			out_req_up = 0;
+			out_req_down = 0;
+
+			destination_floor = 0;
+			dest_in = false;
+//			emg_stop_floor = 0;
+			upordown = 0;
+
+			SEVEN_SEG(current_floor);
+			//다시 대기상태로
+			button_flag = IDLE;
+		}
+		return;		//ELEVATOR_MOVE() 바로 종료
+	}
+
+
+	//내부 1,2,3층 버튼 (토글)
+	if(buttonGetPressed(BTN_IN_1F)) REQ_TOGGLE(1);
+	if(buttonGetPressed(BTN_IN_2F)) REQ_TOGGLE(2);
+	if(buttonGetPressed(BTN_IN_3F)) REQ_TOGGLE(3);
+
+	//외부 버튼 (셋)
+	if(buttonGetPressed(BTN_OUT_1F_UP)) OUT_REQ_SET_UP(1);
+	if(buttonGetPressed(BTN_OUT_2F_UP)) OUT_REQ_SET_UP(2);
+	if(buttonGetPressed(BTN_OUT_2F_DOWN)) OUT_REQ_SET_DOWN(2);
+	if(buttonGetPressed(BTN_OUT_3F_DOWN)) OUT_REQ_SET_DOWN(3);
+
+	uint8_t all_req = requested_floor | out_req_up | out_req_down;	//모든 요청을 하나로 통합해서 검사
+
+// === 상태마다 동작정의 ===
+
+	switch (button_flag) {
+		case IDLE:
+		{
+			if(buttonGetPressed(BTN_OPEN_DOOR))			//문 열림 상태 저장
+						{
+							DOOR_SET(true);
+							doortick = HAL_GetTick();
+//							i2c_lcd_init();
+//							move_cursor(0, 0);
+//							lcd_string("Doors Opening");
+//							move_cursor(1, 0);
+//							lcd_string("Watch Your Step");
+						}
+
+			if(HAL_GetTick() - doortick > DOOR_HOLD_MS)		//문이 열리고 닫히는 동안 대기하는 시간
+						{
+							DOOR_SET(false);
+							button_flag = IDLE;
+//							i2c_lcd_init();
+//							move_cursor(0, 0);
+//							lcd_string("Doors Closing");
+//							move_cursor(1, 0);
+//							lcd_string("Stand Clear");
+						}
+
+			if(buttonGetPressed(BTN_CLOSE_DOOR))	//문 닫힘
+						{
+							DOOR_SET(false);
+							button_flag = IDLE;
+//							i2c_lcd_init();
+//							move_cursor(0, 0);
+//							lcd_string("Doors Closing");
+//							move_cursor(1, 0);
+//							lcd_string("Stand Clear");
+							break;
+						}
+
+
+
+			if(all_req != 0)	//all_req에 요청이 있을때
+			{
+				destination_floor = REQ_NEAREST(current_floor, all_req);
+
+				// 목적지가 내부요청기반인지 기록(맞으면 취소 가능하게)
+				dest_in = REQ_CHECK(destination_floor, requested_floor);
+
+				ELEVATOR_DIR();
+				if(upordown != 0)
+				{
+					if(openorclose)
+					{
+						// 출발 전 문 닫기(이미 닫혀있으면 DOOR_SET이 알아서 무시)
+						DOOR_SET(false);
+					}
+					rotateInit();
+					button_flag = MOVE;
+				}
+			}
+		}
+
+			break;
+		case MOVE:
+		{
+			if(dest_in && destination_floor != 0)
+			{
+			    // 목적지 버튼 취소 감지
+			    if(!REQ_CHECK(destination_floor, requested_floor))
+			    {
+			        dest_in = false;
+			        destination_floor = 0;
+
+			        // 요청이 없어도 "다음 층"까지는 가서 정지 후 IDLE
+			        if(upordown == 1) // UP
+			        {
+			            if(current_floor < FLOOR_MAX) destination_floor = current_floor + 1;
+			            else destination_floor = current_floor; // 안전(이미 최상층이면 현재층)
+			        }
+			        else if(upordown == 2) // DOWN
+			        {
+			            if(current_floor > FLOOR_MIN) destination_floor = current_floor - 1;
+			            else destination_floor = current_floor;
+			        }
+			        else
+			        {
+			            destination_floor = current_floor;
+			        }
+
+			        // 방향 재계산
+			        ELEVATOR_DIR();
+
+			        // 만약 destination이 현재층이면 즉시 DOOR
+			        if(upordown == 0)
+			        {
+			            MOTOR_STOP();
+			            LED_BAR_OFF();                 // LED도 깔끔하게
+			            button_flag = DOOR;
+			            doortick = HAL_GetTick();
+			            DOOR_SET(true);
+			            return;
+			        }
+
+			        // 여기서 끝! (멈추지 말고 MOVE 계속 -> CHANGED_FLOOR에서 다음층 도착 시 stop 처리됨)
+			    }
+			}
+
+
+			if(destination_floor == 0)
+			{
+				if(all_req == 0)
+				{
+					//요청이 없으면 IDLE 모드로
+					MOTOR_STOP();
+					button_flag = IDLE;
+					break;
+				}
+
+				destination_floor = REQ_NEAREST(current_floor,all_req);	//가장 가까운층으로 현재층과 요구층 모든목록 비교
+
+
+
+				//requested_floor은 내부버튼으로만 변화하기에 REQ_CHECK로 비교하여 dest_in에 저장
+				//외부입력(특히 위아래) 구별
+				dest_in = REQ_CHECK(destination_floor,requested_floor);
+
+				ELEVATOR_DIR();
+
+				if(upordown == 0)
+				{
+					MOTOR_STOP();
+					LED_BAR_OFF();
+					button_flag = DOOR;
+					doortick = HAL_GetTick();
+					DOOR_SET(true);
+					break;
+				}
+
+			}
+
+			static uint8_t last_dir = 0; // 0 stop / 1 up / 2 down
+
+			if(upordown != last_dir)
+			{
+			    LED_BAR_Reset();      // 방향 전환 시 무조건 리셋
+			    last_dir = upordown;
+			}
+
+
+
+			if(upordown == 1)
+			{
+				rotateSteps(1000, DIR_CW);
+				LED_BAR_UP_ing();
+				FND_DIR_Up();
+			}
+
+			else if(upordown == 2)
+			{
+				rotateSteps(1000, DIR_CCW);
+				LED_BAR_DOWN_ing();
+				FND_DIR_Down();
+			}
+			else
+			{
+				MOTOR_STOP();
+				button_flag=IDLE;
+			}
+		}
+
+			break;
+		case DOOR:
+		{
+
+
+
+
+
+
+			if(buttonGetPressed(BTN_CLOSE_DOOR))	//문 닫힘
+			{
+				DOOR_SET(false);
+				button_flag = IDLE;
+//				i2c_lcd_init();
+//				move_cursor(0, 0);
+//				lcd_string("Doors Closing");
+//				move_cursor(1, 0);
+//				lcd_string("Stand Clear");
+				break;
+			}
+
+//			if(buttonGetPressed(BTN_OPEN_DOOR))			//문 열림 상태 저장
+//			{
+//				DOOR_SET(true);
+//				doortick = HAL_GetTick();
+//			}
+
+			if(HAL_GetTick() - doortick > DOOR_HOLD_MS)		//문이 열리고 닫히는 동안 대기하는 시간
+			{
+				DOOR_SET(false);
+				button_flag = IDLE;
+//				i2c_lcd_init();
+//				move_cursor(0, 0);
+//				lcd_string("Doors Closing");
+//				move_cursor(1, 0);
+//				lcd_string("Stand Clear");
+			}
+		}
+
+			break;
+		default:
+			break;
+	}
+
+}
+
+
+
+
+
+
+
+

@@ -11,6 +11,8 @@
 #include "stm32f4xx_hal.h"
 #include "stdbool.h"
 #include "motor.h"
+#include "i2c_lcd.h"
+#include "i2c.h"
 
 #define DIR_CW                0 // 시계 방향
 #define DIR_CCW               1
